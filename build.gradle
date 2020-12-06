@@ -1,0 +1,71 @@
+plugins {
+    id "org.wisepersist.gwt" version "1.1.0"
+}
+apply plugin: "java"
+if(project.gradle.startParameter.taskNames.contains("gwtDev")) {
+    apply plugin: "war"
+    apply plugin: "gwt"
+    gwt.modules "net.sayaya.CalculatorTest"
+    sourceSets.main.java.srcDirs += 'src/test/java'
+    gwtDev {
+        jsInteropExports.setGenerate(true)
+        port 8888
+        war file("src/test/webapp")
+    }
+} else {
+    apply plugin: "gwt-base"
+    if(project.gradle.startParameter.taskNames.contains("publishToMavenLocal")) {
+        apply plugin: "maven-publish"
+        publishing {
+            publications {
+                maven(MavenPublication) {
+                    groupId = "net.sayaya"
+                    artifactId = "calculator"
+                    version = 1.0
+                    from components.java
+                }
+            }
+        }
+    }
+    jar {
+        from sourceSets.main.allSource
+        archiveName "${archivesBaseName}.jar"
+    }
+}
+
+group "net.sayaya"
+archivesBaseName = "calculator"
+version "1.0"
+[compileJava, compileTestJava]*.options*.encoding = "UTF-8"
+sourceCompatibility = 11
+targetCompatibility = 11
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.jboss.elemento:elemento-core:1.0.3")
+}
+
+gwt {
+    gwtVersion = "${gwtVersion}"
+    minHeapSize = "1024M"
+    maxHeapSize = "2048M"
+    jsInteropExports.setGenerate(true)
+    compiler {
+        localWorkers = 12
+        disableClassMetadata = true
+        disableCastChecking = true
+    }
+}
+
+compileGwt {
+    minHeapSize = "2048M"
+    maxHeapSize = "4096M"
+}
+
+clean.doFirst {
+    delete "${rootDir}/build/"
+}
